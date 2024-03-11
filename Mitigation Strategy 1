@@ -1,0 +1,26 @@
+#This is an updated "Vulnerable" contract that no longer has the reentrancy vulnerability within it. This first mitigation strategy was achieved by moving the "balances[msg.sender] = 0;" line above the
+"(bool sent, ) = msg.sender.call{value: bal}("");" line which ensures that the balance of the contract is updated to 0 before payment is made to the external contract.
+
+pragma solidity ^0.8.0;
+
+contract Vulnerable{
+    mapping(address => uint) public balances;
+
+    function deposit() public payable{
+        balances[msg.sender] += msg.value;
+    }
+    
+    function withdraw() public {
+        uint bal = balances[msg.sender];
+        require( bal > 0 );
+        balances[msg.sender] = 0;
+    (bool sent, ) = msg.sender.call{value: bal}("");
+    require(sent, "Failed to send Ether");
+
+
+    }
+
+    function getBalance() public view returns(uint){
+        return address(this).balance;
+    }
+}
